@@ -8,6 +8,8 @@ export class Message extends Model {
     declare receiverId: number;
     declare text?: string;
     declare media?: string;
+    declare createdAt: string;
+    declare isRead: boolean;
 }
 
 Message.init(
@@ -41,6 +43,10 @@ Message.init(
                     ? `${process.env.BASE_URL}/${this.getDataValue("media")}`
                     : null;
             },
+        },
+        isRead: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
         },
     },
     {

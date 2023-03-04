@@ -3,10 +3,9 @@ import { sequelize } from "../setup";
 import { Post } from "./Post";
 import { User } from "./User";
 
-export class Comment extends Model {
+class Comment extends Model {
     declare id: number;
     declare commentedBy: number;
-    declare commentOf: number;
     declare parentComment: number;
     declare content: string;
     declare media: string;
@@ -29,17 +28,10 @@ Comment.init(
                 key: "id",
             },
         },
-        commentOf: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            references: {
-                model: Post,
-            },
-        },
         parentComment: {
             type: DataTypes.INTEGER,
             references: {
-                model: Post,
+                model: Comment,
             },
         },
         content: {
@@ -66,3 +58,7 @@ Comment.init(
         sequelize,
     }
 );
+
+Comment.belongsTo(Post, { foreignKey: "postId" });
+
+export { Comment };

@@ -76,7 +76,12 @@ export const Account = () => {
             </Button>
             <Modal
                 open={modalOpen}
-                onClose={() => setModalOpen(false)}
+                onClose={() => {
+                    setMedia(null);
+                    setMediaPath(null);
+                    setContent("");
+                    setModalOpen(false);
+                }}
                 sx={{
                     display: "flex",
                     alignItems: "center",
@@ -153,6 +158,7 @@ export const Account = () => {
                         <input
                             id="media"
                             type="file"
+                            accept="video/*, image/*"
                             hidden={true}
                             onChange={selectMedia}
                         />

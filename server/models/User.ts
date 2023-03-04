@@ -6,6 +6,7 @@ export class User extends Model {
     declare name?: string;
     declare email: string;
     declare password: string;
+    declare picture: string;
 }
 
 User.init(
@@ -26,6 +27,14 @@ User.init(
         password: {
             type: DataTypes.STRING,
             allowNull: false,
+        },
+        picture: {
+            type: DataTypes.STRING,
+            get() {
+                return this.getDataValue("picture")
+                    ? `${process.env.BASE_URL}/${this.getDataValue("picture")}`
+                    : null;
+            },
         },
     },
     {

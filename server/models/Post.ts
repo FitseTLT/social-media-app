@@ -1,5 +1,6 @@
 import { Model, DataTypes } from "sequelize";
 import { sequelize } from "../setup";
+import { Comment } from "./Comment";
 import { User } from "./User";
 
 export class Post extends Model {
@@ -49,3 +50,5 @@ Post.init(
         sequelize,
     }
 );
+
+Post.belongsTo(User, { foreignKey: "postedBy" });

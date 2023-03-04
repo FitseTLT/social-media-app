@@ -20,7 +20,7 @@ const app = express();
 app.use(
     cors({
         credentials: true,
-        origin: ["http://localhost:3000"],
+        origin: ["http://localhost:5173"],
     })
 );
 
@@ -39,6 +39,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(bodyParser.json());
+
+app.use("/public", express.static("./public"));
 
 app.use(signUp);
 app.use(login);
@@ -62,7 +64,7 @@ app.use(logout);
             schema,
             rootValue: root,
             context: {
-                user: req.user?.id,
+                user: Number(req.user?.id),
             },
         }))
     );

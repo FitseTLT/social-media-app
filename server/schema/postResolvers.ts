@@ -1,35 +1,38 @@
 import { Sequelize, Op } from "sequelize";
 import { postsPerPage } from "../constants";
+import { Comment } from "../models/Comment";
 import { FriendshipStatus } from "../models/ENUMS";
 import { Friendship } from "../models/Friendship";
 import { Like_Dislike } from "../models/Like_Dislike";
 import { Post } from "../models/Post";
+import { User } from "../models/User";
 import { storeFS } from "../utils/storeFS";
 
 export const createPost = async (
     {
-        postedBy,
         content,
         media,
     }: {
-        postedBy: number;
         content: string;
         media?: any;
     },
-    { user }: { user: string }
+    { user }: { user: number }
 ) => {
-    const userId = Number(user);
-    if (userId !== postedBy) throw new Error("Not authorized to post");
+    if (!content && !media) throw new Error("can not have an empty post");
+
+    const postedBy = user;
 
     let mediaUrl = null;
     if (media) {
-        const { filename, createReadStream } = await media.promise;
+        const { filename, createReadStream, mimetype } = await media.promise;
+        if (!mimetype.includes("image") && !mimetype.includes("video"))
+            throw new Error("can only post image or video");
         const stream = createReadStream();
         const path = await storeFS({ stream, filename });
         mediaUrl = path.path;
     }
 
-    const post = Post.create({
+    const post = await Post.create({
         postedBy,
         content,
         media: mediaUrl,
@@ -67,14 +70,32 @@ export const fetchTimeline = async (
                 [Op.in]: friendIds,
             },
         },
+        include: User,
         order: [["createdAt", "DESC"]],
         limit: postsPerPage,
         offset: page * postsPerPage,
     });
 
-    posts[0].toJSON().comment = "sdf";
+    return posts.map(
+        async ({ id, postedBy, content, media, likes, dislikes }) => {
+            const lastComment = await Comment.findOne({
+                where: {
+                    postId: id,
+                },
+                order: [["createdAt", "DESC"]],
+            });
 
-    return posts;
+            return {
+                id,
+                postedBy,
+                content,
+                media,
+                likes,
+                dislikes,
+                lastComment,
+            };
+        }
+    );
 };
 
 export async function likePost(
@@ -128,3 +149,60 @@ export async function likePost(
     }
     return await post.reload();
 }
+
+export const listPosts = async (
+    { friendId, page = 0 }: { friendId: number; page: number },
+    { user }: { user: number }
+) => {
+    const friendship = await Friendship.findOne({
+        where: Sequelize.and(
+            {
+                status: FriendshipStatus.Accepted,
+            },
+            Sequelize.or(
+                {
+                    requestedBy: user,
+                    acceptedBy: friendId,
+                },
+                {
+                    acceptedBy: user,
+                    requestedBy: friendId,
+                }
+            )
+        ),
+    });
+
+    if (!friendship) throw new Error("not authorized to see the posts");
+
+    const posts = await Post.findAll({
+        where: {
+            postedBy: friendId,
+        },
+        order: [["createdAt", "DESC"]],
+        limit: postsPerPage,
+        offset: page * postsPerPage,
+    });
+
+    return posts.map(
+        async ({ id, postedBy, content, media, likes, dislikes }) => {
+            const lastComment = await Comment.findOne({
+                where: {
+                    postId: id,
+                },
+                order: [["createdAt", "DESC"]],
+            });
+
+            return {
+                id,
+                postedBy,
+                content,
+                media,
+                likes,
+                dislikes,
+                lastComment,
+            };
+        }
+    );
+
+    return posts;
+};

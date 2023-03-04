@@ -30,7 +30,14 @@ export const signUp = Router();
 
 signUp.post(
     "/signup",
-    passport.authenticate("signup", { session: true, failureMessage: true }),
+    (req, res, next) =>
+        passport.authenticate(
+            "signup",
+            { session: true, successRedirect: "/", failureMessage: true },
+            (err: any, user: any, info: any) => {
+                if (!user) res.status(401).send(info.message);
+            }
+        )(req, res, next),
     (req, res, next) => {
         res.json({ message: "Successfully Signed Up", user: req.user });
     }

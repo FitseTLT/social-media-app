@@ -9,6 +9,6 @@ export const checkPassword = async (
     hashedPassword: string,
     password: string
 ) => {
-    const hashed = await encrypt(password);
-    return hashed === hashedPassword;
+    const passwordCorrect = await bcrypt.compare(password, hashedPassword);
+    return passwordCorrect;
 };

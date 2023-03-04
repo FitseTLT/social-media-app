@@ -1,30 +1,22 @@
-import { Sequelize, Op } from "sequelize";
-import { postsPerPage } from "../constants";
 import { Comment } from "../models/Comment";
-import { FriendshipStatus } from "../models/ENUMS";
-import { Friendship } from "../models/Friendship";
 import { Like_Dislike } from "../models/Like_Dislike";
-import { Post } from "../models/Post";
 import { storeFS } from "../utils/storeFS";
 
 export const createComment = async (
     {
-        commentedBy,
-        commentOf,
+        postId,
         parentComment,
         content,
         media,
     }: {
-        commentedBy: number;
-        commentOf: number;
+        postId: number;
         parentComment: number;
         content: string;
         media?: any;
     },
-    { user }: { user: string }
+    { user }: { user: number }
 ) => {
-    const userId = Number(user);
-    if (commentedBy !== userId) throw new Error("Not authorized to comment");
+    const commentedBy = user;
 
     let mediaUrl = null;
     if (media) {
@@ -36,7 +28,7 @@ export const createComment = async (
 
     const comment = await Comment.create({
         commentedBy,
-        commentOf,
+        postId,
         parentComment,
         content,
         media: mediaUrl,
@@ -44,42 +36,6 @@ export const createComment = async (
 
     return comment;
 };
-
-// export const fetchTimeline = async (
-//     { page = 0 }: { page: number },
-//     { user }: { user: string }
-// ) => {
-//     const userId = Number(user);
-//     const friends = await Friendship.findAll({
-//         where: Sequelize.and(
-//             {
-//                 status: FriendshipStatus.Accepted,
-//             },
-//             Sequelize.or(
-//                 {
-//                     requestedBy: userId,
-//                 },
-//                 { acceptedBy: userId }
-//             )
-//         ),
-//     });
-
-//     const friendIds = friends.map((friend) =>
-//         userId === friend.requestedBy ? friend.acceptedBy : friend.requestedBy
-//     );
-
-//     const posts = await Post.findAll({
-//         where: {
-//             postedBy: {
-//                 [Op.in]: friendIds,
-//             },
-//         },
-//         order: [["createdAt", "DESC"]],
-//         limit: postsPerPage,
-//         offset: page * postsPerPage,
-//     });
-//     return posts;
-// };
 
 export async function likeComment(
     {
@@ -89,10 +45,8 @@ export async function likeComment(
         commentId: number;
         isLike: boolean;
     },
-    { user }: { user: string }
+    { user }: { user: number }
 ) {
-    const userId = Number(user);
-
     const comment = await Comment.findByPk(commentId);
 
     if (!comment) throw new Error("comment doesn't exist");
@@ -107,7 +61,7 @@ export async function likeComment(
         await Like_Dislike.create({
             commentId,
             isLike,
-            userId,
+            userId: user,
         });
 
         isLike
