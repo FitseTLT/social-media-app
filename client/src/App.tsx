@@ -12,6 +12,10 @@ import { store } from "./store/store";
 import { EditProfile } from "./components/EditProfile";
 import { createUploadLink } from "apollo-upload-client";
 import { Account } from "./components/Account";
+import { Timeline } from "./components/Timeline";
+import { FindFriends } from "./components/FindFriends";
+import { Posts } from "./components/Posts";
+import { FriendRequests } from "./components/FriendRequests";
 
 const link = createUploadLink({
     uri: "http://localhost:4000/graphql",
@@ -28,11 +32,22 @@ function App() {
                     <ThemeProvider theme={theme}>
                         <Routes>
                             <Route path="/" element={<MainLayout />}>
+                                <Route index element={<Timeline />}></Route>
                                 <Route
                                     path="/profile"
                                     element={<EditProfile />}
                                 />
-                                <Route path="/account" element={<Account />} />
+                                <Route path="/account" element={<Account />}>
+                                    <Route index element={<Posts />} />
+                                    <Route
+                                        path="find-friends"
+                                        element={<FindFriends />}
+                                    />
+                                    <Route
+                                        path="friend-requests"
+                                        element={<FriendRequests />}
+                                    />
+                                </Route>
                             </Route>
                             <Route path="/signup" element={<Signup />} />
                             <Route path="/login" element={<Login />} />
@@ -46,6 +61,14 @@ function App() {
 
 const theme = createTheme({
     components: {
+        MuiTab: {
+            styleOverrides: {
+                root: {
+                    ":focus": { outline: "none" },
+                    textTransform: "capitalize",
+                },
+            },
+        },
         MuiInputBase: {
             styleOverrides: {
                 root: {

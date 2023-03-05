@@ -30,7 +30,7 @@ const MainLayout = () => {
         if (loading) return;
 
         if (error || !data) {
-            navigate("/login");
+            return navigate("/login");
         }
 
         const { id, name, picture } = data?.getCurrentUser;
@@ -71,14 +71,18 @@ const MainLayout = () => {
                 <AvatarMenu />
             </nav>
             <Container
+                maxWidth={false}
                 sx={{
+                    width: "100%",
+                    maxWidth: "100%",
                     bgcolor: "#E4E6EB",
                     position: "absolute",
                     top: "80px",
-                    bottom: "0",
+                    bottom: 0,
                     right: 0,
                     left: 0,
                     p: 2,
+                    overflow: "auto",
                 }}
             >
                 <Outlet />

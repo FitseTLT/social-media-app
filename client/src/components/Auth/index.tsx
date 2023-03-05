@@ -41,6 +41,7 @@ export const Auth = ({
     return (
         <Container
             sx={{
+                height: "100%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
