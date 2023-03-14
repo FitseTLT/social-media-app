@@ -15,7 +15,6 @@
 }
 
 .search-input {
-    background-color: rgba(244, 244, 244, 0.923);
     width: 70%;
     margin: 10px auto;
     display: block;
@@ -26,6 +25,18 @@
 }
 
 .search-input:focus {
+    outline: none;
+}
+
+.message-input {
+    margin: 10px auto;
+    border: none;
+    padding: 15px;
+    border-radius: 10px;
+    font-family: "Roboto";
+}
+
+.message-input:focus {
     outline: none;
 }
 
@@ -55,6 +66,7 @@ body {
     place-items: center;
     min-width: 320px;
     min-height: 100vh;
+    overflow-y: auto;
 }
 
 h1 {

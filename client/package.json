@@ -23,7 +23,9 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.43.3",
     "react-redux": "^8.0.5",
-    "react-router-dom": "^6.8.2"
+    "react-router-dom": "^6.8.2",
+    "socket.io-client": "^4.6.1",
+    "use-force-update": "^1.0.11"
   },
   "devDependencies": {
     "@types/react": "^18.0.27",

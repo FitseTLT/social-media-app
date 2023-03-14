@@ -121,10 +121,10 @@ export const Auth = ({
                             marginX: "auto",
                             display: "inline-block",
                             mt: 6,
-                            backgroundColor: "blue",
                             color: "white",
                         }}
                         type="submit"
+                        variant="contained"
                     >
                         {label}
                     </Button>

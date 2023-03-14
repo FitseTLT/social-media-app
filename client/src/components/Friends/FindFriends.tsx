@@ -22,7 +22,7 @@ const SEND_REQUEST = gql`
 `;
 
 export const FindFriends = () => {
-    const { refetch, data: peopleList } = useQuery(SEARCH_FOR_PEOPLE);
+    const { refetch, data: data } = useQuery(SEARCH_FOR_PEOPLE);
     const [query, setQuery] = useState("");
 
     const [
@@ -63,7 +63,12 @@ export const FindFriends = () => {
             />
             <Divider sx={{ marginBlock: 2 }} />
             <Box display="flex" alignItems="center" flexDirection="column">
-                {peopleList?.searchForPeople?.map(
+                {!data?.searchForPeople?.length && (
+                    <Typography textAlign={"center"} marginTop={2}>
+                        No results
+                    </Typography>
+                )}
+                {data?.searchForPeople?.map(
                     ({
                         id,
                         name,

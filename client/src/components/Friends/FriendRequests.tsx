@@ -3,8 +3,8 @@ import { Avatar, Box, Button, Card, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 
 const LIST_FRIEND_REQUESTS = gql`
-    query ($page: Int) {
-        listFriendRequests(page: $page) {
+    query {
+        listFriendRequests {
             friendshipId
             name
             picture
@@ -22,8 +22,9 @@ const ACCEPT_FRIEND_REQUEST = gql`
 
 export const FriendRequests = () => {
     const { data, refetch } = useQuery(LIST_FRIEND_REQUESTS);
-    const [acceptRequest, { data: requestData, loading, called, error }] =
-        useMutation(ACCEPT_FRIEND_REQUEST);
+    const [acceptRequest, { data: requestData, loading, called }] = useMutation(
+        ACCEPT_FRIEND_REQUEST
+    );
     const [disableList, setDisableList] = useState<number[]>([]);
 
     const sendRequest = (friendshipId: number, accept?: boolean) => {
@@ -44,6 +45,13 @@ export const FriendRequests = () => {
 
         refetch();
     }, [loading]);
+
+    if (!data?.listFriendRequests?.length)
+        return (
+            <Typography textAlign={"center"} marginTop={2}>
+                No Friend Requests
+            </Typography>
+        );
 
     return (
         <Box display="flex" alignItems="center" flexDirection="column">
