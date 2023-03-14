@@ -10,6 +10,7 @@ const mysql = createConnection({
 export const sequelize = new Sequelize("social_media", "root", "", {
     host: "localhost",
     dialect: "mysql",
+    logging: false,
 });
 
 mysql.query(`create database if not exists social_media`, (err) => {

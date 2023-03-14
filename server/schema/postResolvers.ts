@@ -22,7 +22,8 @@ export const createPost = async (
 
     const postedBy = user;
 
-    let mediaUrl = null;
+    let mediaUrl = null,
+        mediaType = null;
     if (media) {
         const { filename, createReadStream, mimetype } = await media.promise;
         if (!mimetype.includes("image") && !mimetype.includes("video"))
@@ -30,12 +31,14 @@ export const createPost = async (
         const stream = createReadStream();
         const path = await storeFS({ stream, filename });
         mediaUrl = path.path;
+        mediaType = mimetype;
     }
 
     const post = await Post.create({
         postedBy,
         content,
         media: mediaUrl,
+        mediaType,
     });
 
     return post;
@@ -43,9 +46,8 @@ export const createPost = async (
 
 export const fetchTimeline = async (
     { page = 0 }: { page: number },
-    { user }: { user: string }
+    { user }: { user: number }
 ) => {
-    const userId = Number(user);
     const friends = await Friendship.findAll({
         where: Sequelize.and(
             {
@@ -53,18 +55,18 @@ export const fetchTimeline = async (
             },
             Sequelize.or(
                 {
-                    requestedBy: userId,
+                    requestedBy: user,
                 },
-                { acceptedBy: userId }
+                { acceptedBy: user }
             )
         ),
     });
 
     const friendIds = friends.map((friend) =>
-        userId === friend.requestedBy ? friend.acceptedBy : friend.requestedBy
+        user === friend.requestedBy ? friend.acceptedBy : friend.requestedBy
     );
 
-    const posts = await Post.findAll({
+    const posts = (await Post.findAll({
         where: {
             postedBy: {
                 [Op.in]: friendIds,
@@ -74,15 +76,30 @@ export const fetchTimeline = async (
         order: [["createdAt", "DESC"]],
         limit: postsPerPage,
         offset: page * postsPerPage,
-    });
+    })) as any[];
 
     return posts.map(
-        async ({ id, postedBy, content, media, likes, dislikes }) => {
+        async ({
+            id,
+            postedBy,
+            content,
+            media,
+            mediaType,
+            likes,
+            dislikes,
+            createdAt,
+            User: UserField,
+        }) => {
             const lastComment = await Comment.findOne({
                 where: {
                     postId: id,
                 },
+                include: User,
                 order: [["createdAt", "DESC"]],
+            });
+
+            const like = await Like_Dislike.findOne({
+                where: { userId: user, postId: id },
             });
 
             return {
@@ -90,9 +107,13 @@ export const fetchTimeline = async (
                 postedBy,
                 content,
                 media,
+                mediaType,
                 likes,
                 dislikes,
                 lastComment,
+                User: UserField,
+                createdAt,
+                hasLiked: like?.isLike,
             };
         }
     );
@@ -151,45 +172,63 @@ export async function likePost(
 }
 
 export const listPosts = async (
-    { friendId, page = 0 }: { friendId: number; page: number },
+    { userId, page = 0 }: { userId: number; page: number },
     { user }: { user: number }
 ) => {
-    const friendship = await Friendship.findOne({
-        where: Sequelize.and(
-            {
-                status: FriendshipStatus.Accepted,
-            },
-            Sequelize.or(
+    if (userId !== user) {
+        const friendship = await Friendship.findOne({
+            where: Sequelize.and(
                 {
-                    requestedBy: user,
-                    acceptedBy: friendId,
+                    status: FriendshipStatus.Accepted,
                 },
-                {
-                    acceptedBy: user,
-                    requestedBy: friendId,
-                }
-            )
-        ),
-    });
+                Sequelize.or(
+                    {
+                        requestedBy: user,
+                        acceptedBy: userId,
+                    },
+                    {
+                        acceptedBy: user,
+                        requestedBy: userId,
+                    }
+                )
+            ),
+        });
 
-    if (!friendship) throw new Error("not authorized to see the posts");
+        if (!friendship) throw new Error("not authorized to see the posts");
+    }
 
-    const posts = await Post.findAll({
+    const posts = (await Post.findAll({
         where: {
-            postedBy: friendId,
+            postedBy: userId,
         },
+        include: User,
         order: [["createdAt", "DESC"]],
         limit: postsPerPage,
         offset: page * postsPerPage,
-    });
+    })) as any[];
 
     return posts.map(
-        async ({ id, postedBy, content, media, likes, dislikes }) => {
+        async ({
+            id,
+            postedBy,
+            content,
+            media,
+            mediaType,
+            likes,
+            dislikes,
+            createdAt,
+            User: UserField,
+        }) => {
             const lastComment = await Comment.findOne({
                 where: {
                     postId: id,
                 },
+                include: User,
                 order: [["createdAt", "DESC"]],
+            });
+
+            const like = await Like_Dislike.findOne({
+                where: { userId: user, postId: id },
             });
 
             return {
@@ -197,12 +236,14 @@ export const listPosts = async (
                 postedBy,
                 content,
                 media,
+                mediaType,
                 likes,
                 dislikes,
                 lastComment,
+                User: UserField,
+                createdAt,
+                hasLiked: like?.isLike,
             };
         }
     );
-
-    return posts;
 };

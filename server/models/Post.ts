@@ -8,6 +8,7 @@ export class Post extends Model {
     declare postedBy: number;
     declare content?: string;
     declare media?: string;
+    declare mediaType?: string;
     declare likes: number;
     declare dislikes: number;
 }
@@ -33,10 +34,11 @@ Post.init(
             type: DataTypes.STRING,
             get() {
                 return this.getDataValue("media") !== null
-                    ? `${process.env.BASE_URL}/${this.getDataValue("media")}`
+                    ? `${process.env.BASE_URL}${this.getDataValue("media")}`
                     : null;
             },
         },
+        mediaType: { type: DataTypes.STRING },
         likes: {
             type: DataTypes.INTEGER,
             defaultValue: 0,

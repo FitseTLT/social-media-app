@@ -1,4 +1,9 @@
-import { Model, DataTypes } from "sequelize";
+import { Model, DataTypes, Op } from "sequelize";
+import { makePaginate } from "sequelize-cursor-pagination";
+import {
+    PaginateOptions,
+    PaginationConnection,
+} from "sequelize-cursor-pagination/types";
 import { sequelize } from "../setup";
 import { User } from "./User";
 
@@ -8,8 +13,12 @@ export class Message extends Model {
     declare receiverId: number;
     declare text?: string;
     declare media?: string;
+    declare mediaType?: string;
     declare createdAt: string;
     declare isRead: boolean;
+    declare static paginate: (
+        options: PaginateOptions<Message>
+    ) => Promise<PaginationConnection<Message>>;
 }
 
 Message.init(
@@ -40,9 +49,12 @@ Message.init(
             type: DataTypes.STRING,
             get() {
                 return this.getDataValue("media") !== null
-                    ? `${process.env.BASE_URL}/${this.getDataValue("media")}`
+                    ? `${process.env.BASE_URL}${this.getDataValue("media")}`
                     : null;
             },
+        },
+        mediaType: {
+            type: DataTypes.STRING,
         },
         isRead: {
             type: DataTypes.BOOLEAN,
@@ -53,3 +65,6 @@ Message.init(
         sequelize,
     }
 );
+
+Message.belongsTo(User, { as: "SenderId", foreignKey: "senderId" });
+Message.paginate = makePaginate(Message);

@@ -11,16 +11,20 @@ import passport from "passport";
 import { logout } from "./auth/logout";
 import sequelizeConnect from "connect-session-sequelize";
 import { sequelize } from "./setup";
+import http from "http";
+import { socketSetup } from "./socket";
 
 let graphqlUploadExpress: any;
 
 dotenv.config();
 require("./setup");
 const app = express();
+export const httpServer = http.createServer(app);
+
 app.use(
     cors({
         credentials: true,
-        origin: ["http://localhost:5173"],
+        origin: [process.env.CLIENT_URL!],
     })
 );
 
@@ -37,6 +41,8 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
+
+socketSetup();
 
 app.use(bodyParser.json());
 
@@ -70,6 +76,6 @@ app.use(logout);
     );
 })();
 
-app.listen(process.env.PORT, () => {
+httpServer.listen(process.env.PORT, () => {
     console.log(`Listening on Port ${process.env.PORT}`);
 });

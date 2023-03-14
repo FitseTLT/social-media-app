@@ -32,7 +32,7 @@ User.init(
             type: DataTypes.STRING,
             get() {
                 return this.getDataValue("picture")
-                    ? `${process.env.BASE_URL}/${this.getDataValue("picture")}`
+                    ? `${process.env.BASE_URL}${this.getDataValue("picture")}`
                     : null;
             },
         },

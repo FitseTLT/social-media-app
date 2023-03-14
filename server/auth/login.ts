@@ -19,7 +19,7 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser((token, done) => {
     const user = jwt.verify(token as string, process.env.COOKIE_SESSION!);
-    console.log({ user });
+
     return done(null, user as Express.User);
 });
 

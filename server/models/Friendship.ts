@@ -66,3 +66,7 @@ Friendship.init(
     },
     { sequelize }
 );
+
+Friendship.belongsTo(Message, { foreignKey: "lastMessage" });
+Friendship.belongsTo(User, { foreignKey: "requestedBy", as: "RequestedUser" });
+Friendship.belongsTo(User, { foreignKey: "acceptedBy", as: "AcceptedUser" });

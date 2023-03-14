@@ -6,11 +6,9 @@ import { User } from "./User";
 class Comment extends Model {
     declare id: number;
     declare commentedBy: number;
-    declare parentComment: number;
-    declare content: string;
-    declare media: string;
-    declare likes: number;
-    declare dislikes: number;
+    declare content?: string;
+    declare media?: string;
+    declare mediaType?: string;
 }
 
 Comment.init(
@@ -28,12 +26,7 @@ Comment.init(
                 key: "id",
             },
         },
-        parentComment: {
-            type: DataTypes.INTEGER,
-            references: {
-                model: Comment,
-            },
-        },
+
         content: {
             type: DataTypes.STRING(1000),
         },
@@ -41,17 +34,12 @@ Comment.init(
             type: DataTypes.STRING,
             get() {
                 return this.getDataValue("media")
-                    ? `${process.env.BASE_URL}/${this.getDataValue("media")}`
+                    ? `${process.env.BASE_URL}${this.getDataValue("media")}`
                     : null;
             },
         },
-        likes: {
-            type: DataTypes.INTEGER,
-            defaultValue: 0,
-        },
-        dislikes: {
-            type: DataTypes.INTEGER,
-            defaultValue: 0,
+        mediaType: {
+            type: DataTypes.STRING,
         },
     },
     {
@@ -60,5 +48,6 @@ Comment.init(
 );
 
 Comment.belongsTo(Post, { foreignKey: "postId" });
+Comment.belongsTo(User, { foreignKey: "commentedBy" });
 
 export { Comment };

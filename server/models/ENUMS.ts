@@ -3,3 +3,8 @@ export enum FriendshipStatus {
     Accepted = "accepted",
     Rejected = "rejected",
 }
+
+export enum UserStatus {
+    Connected = "connected",
+    Disconnected = "disconnected",
+}

@@ -2,18 +2,15 @@ import { FriendshipStatus } from "../models/ENUMS";
 import { Friendship } from "../models/Friendship";
 import { Op } from "sequelize";
 import { User } from "../models/User";
-import { friendsPerPage, peoplesPerPage } from "../constants";
 import { sequelize } from "../setup";
 
 export async function createFriendRequest(
-    { requestedBy, acceptedBy }: { requestedBy: number; acceptedBy: number },
+    { acceptedBy }: { acceptedBy: number },
     { user }: { user: number }
 ) {
-    if (user !== requestedBy)
-        throw new Error("requested by field is not the logged in user");
     try {
         const friendRequest = await Friendship.create({
-            requestedBy,
+            requestedBy: user,
             acceptedBy,
         });
         return friendRequest;
@@ -51,7 +48,7 @@ export async function acceptFriendRequest(
 }
 
 export async function listFriends(
-    { query = "", page = 0 }: { query: string; page: number },
+    { query = "" }: { query: string },
     { user }: { user: number }
 ) {
     const friendshipList = await Friendship.findAll({
@@ -76,8 +73,6 @@ export async function listFriends(
             ],
         },
         order: [["name", "ASC"]],
-        limit: friendsPerPage,
-        offset: page * friendsPerPage,
     });
 
     return friendsList.map(({ id, name, picture }) => ({
@@ -88,7 +83,7 @@ export async function listFriends(
 }
 
 export async function searchForPeople(
-    { query = "", page = 0 }: { query: string; page: number },
+    { query = "" }: { query: string },
     { user }: { user: number }
 ) {
     const friendshipList = await Friendship.findAll({
@@ -97,41 +92,55 @@ export async function searchForPeople(
         },
     });
 
-    const friendsListIds = friendshipList.map((friendship) =>
-        friendship.requestedBy === user
-            ? friendship.acceptedBy
-            : friendship.requestedBy
-    );
+    const acceptedFriends = friendshipList
+        .filter((friendship) => friendship.status === FriendshipStatus.Accepted)
+        .map((friendship) =>
+            friendship.requestedBy === user
+                ? friendship.acceptedBy
+                : friendship.requestedBy
+        );
 
     const peoplesList = await User.findAll({
         where: {
-            id: { [Op.notIn]: friendsListIds.concat(user) },
+            id: { [Op.notIn]: acceptedFriends.concat(user) },
             name: { [Op.like]: `%${query}%` },
         },
         order: [["name", "ASC"]],
-        limit: peoplesPerPage,
-        offset: page * peoplesPerPage,
     });
 
-    return peoplesList.map(({ id, name, picture }) => ({
-        id,
-        name,
-        picture,
-    }));
+    return peoplesList.map(({ id, name, picture }) => {
+        const friendship = friendshipList.find(
+            ({ requestedBy, acceptedBy }) =>
+                id === requestedBy || id === acceptedBy
+        );
+
+        return {
+            id,
+            name,
+            picture,
+            status: friendship?.status,
+        };
+    });
 }
 
-export async function listFriendRequests(
-    { page = 0 }: { page: number },
-    { user }: { user: number }
-) {
-    const [friendshipList] = await sequelize.query(`
-    select friendships.id as friendshipId, users.name,
-     users.picture, users.id as friendId from friendships join
-    users on friendships.requestedBy = users.id 
-    where friendships.status = "${FriendshipStatus.Requested}"
-    and friendships.acceptedBy = ${user} order by users.name asc
-     limit ${friendsPerPage} offset ${page * friendsPerPage} 
-    `);
+export async function listFriendRequests(_: any, { user }: { user: number }) {
+    const friendshipList = (await Friendship.findAll({
+        where: {
+            status: FriendshipStatus.Requested,
+            acceptedBy: user,
+        },
+        include: [{ model: User, as: "RequestedUser" }],
+    })) as any[];
 
-    return friendshipList;
+    return friendshipList.map(
+        ({
+            id: friendshipId,
+            RequestedUser: { id: friendId, name, picture },
+        }) => ({
+            friendshipId,
+            friendId,
+            name,
+            picture,
+        })
+    );
 }

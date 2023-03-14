@@ -12,9 +12,10 @@ import {
     searchForPeople,
     listFriendRequests,
 } from "./friendshipResolvers";
-import { createComment, likeComment } from "./commentResolvers";
+import { createComment, getComments } from "./commentResolvers";
 import {
     createMessage,
+    getTotalUnread,
     listMessages,
     listRecentMessages,
     setAllAsRead,
@@ -55,22 +56,27 @@ type UserData{
     picture: String
 }
 
+type PeopleData{
+    id: Int!
+    name: String
+    picture: String
+    status: String
+}
+
 type Post {
-    id: Int
+    id: Int!
     User: UserData
     postedBy: Int,
     content: String,
     media: String
+    mediaType: String
     likes: Int
     dislikes: Int
     lastComment: Comment
+    createdAt: String!
+    hasLiked: Boolean
 }
 
-type FriendsList {
-    id: Int!
-    name: String
-    picture: String
-}
 
 type FriendRequest {
     friendshipId: Int!
@@ -84,55 +90,67 @@ type MessagesList {
     name: String
     picture: String
     lastMessage: String
-    unreadMessage: Int
+    unreadMessages: Int
 }
 
 type Message {
+    id: Int!
     text: String
     media: String
+    mediaType: String
     senderId: Int
     receiverId: Int
     createdAt: String
     isRead: Boolean
+    cursor: String
 }
 
 type Comment{
+    id:Int!
     commentedBy: Int!,
     postId: Int!,
     parentComment: Int,
     content: String,
     media: String
+    mediaType: String
     likes: Int,
     dislikes: Int
+    User: UserData
+    createdAt: String!
 }
 
 type Friendship{
+    id:Int!
     requestedBy: Int,
     acceptedBy: Int,
     createdAt: String,
     acceptedAt: String
 }
 
+type UnreadList {
+    friendIdsWithUnread:[Int]
+}
 
 type Query {
     getCurrentUser: UserData
     fetchTimeline(page: Int): [Post]
-    listFriends(query: String, page: Int): [FriendsList]
-    listRecentMessages( page: Int): [MessagesList]
-    listMessages(friendId: Int!, query: String, page: Int): [Message]
-    searchForPeople(query: String, page: Int): [FriendsList]
-    listFriendRequests(page: Int): [FriendRequest]
-    listPosts(friendId: Int!, page: Int): [Post]
+    listFriends(query: String): [UserData]
+    listRecentMessages(query: String, page: Int): [MessagesList]
+    listMessages(friendId: Int!, cursor: String, isNextPage: Boolean):[Message]
+    searchForPeople(query: String): [PeopleData]
+    listFriendRequests: [FriendRequest]
+    listPosts(userId: Int!, page: Int): [Post]
+    getComments(postId: Int!, page: Int): [Comment]
+    getTotalUnread:UnreadList
 }
 
 type Mutation{
     updateProfile(name: String, picture: Upload, newPassword: String, confirmPassword: String, prevPassword: String): UserData
     createPost(content:String, media:Upload):Post
-    createFriendRequest(requestedBy: Int!, acceptedBy: Int!):Friendship
+    createFriendRequest( acceptedBy: Int!):Friendship
     acceptFriendRequest(friendshipId: Int!, accepted: Boolean):Friendship
     likePost(postId: Int!, isLike: Boolean):Post
-    createComment(postId: Int!, parentComment: Int, content: String, media: Upload): Comment
-    likeComment(commentId: Int!, isLike: Boolean):Comment
+    createComment(postId: Int!, content: String, media: Upload): Comment
     createMessage(receiverId: Int!,text: String, media: Upload): Message
     setAsRead(messageId: Int!): Message
     setAllAsRead(friendId: Int!): [Message]
@@ -146,7 +164,6 @@ export const root: any = {
     acceptFriendRequest,
     likePost,
     createComment,
-    likeComment,
     listFriends,
     createMessage,
     setAsRead,
@@ -158,4 +175,6 @@ export const root: any = {
     listPosts,
     updateProfile,
     getCurrentUser,
+    getComments,
+    getTotalUnread,
 };
