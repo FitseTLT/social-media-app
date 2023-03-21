@@ -5,7 +5,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { Login } from "./components/Auth/Login";
 import MainLayout from "./components/MainLayout";
 import { ApolloClient } from "@apollo/client";
-import { InMemoryCache } from "@apollo/client/cache";
+import { FieldMergeFunction, InMemoryCache } from "@apollo/client/cache";
 import { ApolloProvider } from "@apollo/client/react/context";
 import { EditProfile } from "./components/EditProfile";
 import { createUploadLink } from "apollo-upload-client";
@@ -17,15 +17,26 @@ import { FriendsList } from "./components/Friends/FriendsList";
 import { FriendDetail } from "./components/Friends/FriendDetail";
 import { RecentMessageList } from "./components/Message/RecentMessageList";
 import { DirectMessage } from "./components/Message/DirectMessage";
-import { io } from "socket.io-client";
 import { Timeline } from "./components/Posts/Timeline";
 
 const link = createUploadLink({
-    uri: "http://localhost:4000/graphql",
+    uri: "/graphql",
     credentials: "include",
 });
 
-const socket = io("http://localhost:4000", { autoConnect: false });
+const merge: FieldMergeFunction = (existing = [], incoming, { readField }) => {
+    const ids: number[] = [];
+    const merged = [...existing, ...incoming];
+
+    return merged.filter((data) => {
+        const id = readField("id", data) as number;
+        if (!ids.includes(id)) {
+            ids.push(id);
+            return true;
+        }
+        return false;
+    });
+};
 
 const client = new ApolloClient({
     link,
@@ -35,24 +46,18 @@ const client = new ApolloClient({
                 fields: {
                     fetchTimeline: {
                         keyArgs: false,
-                        merge(existing = [], incoming) {
-                            return [...existing, ...incoming];
-                        },
+                        merge,
                     },
                     getComments: {
-                        keyArgs: false,
-                        merge(existing = [], incoming) {
-                            return [...existing, ...incoming];
-                        },
+                        keyArgs: ["id"],
+                        merge,
                     },
                     listPosts: {
-                        keyArgs: false,
-                        merge(existing = [], incoming) {
-                            return [...existing, ...incoming];
-                        },
+                        keyArgs: ["userId"],
+                        merge,
                     },
                     listMessages: {
-                        keyArgs: ["id"],
+                        keyArgs: ["friendId"],
                         merge(existing = [], incoming) {
                             return [...existing, ...incoming];
                         },
@@ -69,10 +74,7 @@ function App() {
             <ApolloProvider client={client}>
                 <ThemeProvider theme={theme}>
                     <Routes>
-                        <Route
-                            path="/"
-                            element={<MainLayout socket={socket} />}
-                        >
+                        <Route path="/" element={<MainLayout />}>
                             <Route index element={<Timeline />}></Route>
                             <Route path="/profile" element={<EditProfile />} />
                             <Route path="/account" element={<Account />}>
@@ -100,7 +102,7 @@ function App() {
                             />
                             <Route
                                 path="/chat/:friendId"
-                                element={<DirectMessage socket={socket} />}
+                                element={<DirectMessage />}
                             />
                         </Route>
                         <Route path="/signup" element={<Signup />} />
@@ -114,6 +116,15 @@ function App() {
 
 const theme = createTheme({
     components: {
+        MuiIconButton: {
+            styleOverrides: {
+                root: {
+                    ":focus": {
+                        outline: "none",
+                    },
+                },
+            },
+        },
         MuiTypography: {
             styleOverrides: { root: { overflowWrap: "break-word" } },
         },

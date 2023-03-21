@@ -9,3 +9,20 @@
     height: calc(100vh - 80px);
     width: 100%;
 }
+
+.full-box {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.mini-box {
+    position: absolute;
+    right: 20px;
+    bottom: 100px;
+    overflow: hidden;
+    width: 30%;
+    height: 30%;
+    border-radius: 5px;
+    z-index: 2;
+}

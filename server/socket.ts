@@ -1,14 +1,13 @@
-import http from "http";
 import { Op } from "sequelize";
 import { Server, Socket } from "socket.io";
-import { httpServer } from "./index";
+import { httpsServer } from "./index";
 import { FriendshipStatus, UserStatus } from "./models/ENUMS";
 import { Friendship } from "./models/Friendship";
 import { OnlineStatus } from "./models/OnlineStatus";
 
 export let socketIO: Server;
 export const socketSetup = () => {
-    socketIO = new Server<any, any, any, { userId: number }>(httpServer, {
+    socketIO = new Server<any, any, any, { userId: number }>(httpsServer, {
         cors: { origin: process.env.CLIENT_URL },
     });
     socketIO.use((socket, next) => {
@@ -27,6 +26,20 @@ export const socketSetup = () => {
         socket.join(userId.toString());
         sendStatus(socket);
 
+        socket.on("offer", (friendId, data) => {
+            socket.to(friendId.toString()).emit("offer", data);
+        });
+
+        socket.on("answer", (friendId, data) => {
+            socket.to(friendId.toString()).emit("answer", data);
+        });
+
+        socket.on("candidate", (friendId, candidate) => {
+            socket.to(friendId.toString()).emit("candidate", candidate);
+        });
+        socket.on("end-call", (friendId) => {
+            socket.to(friendId.toString()).emit("end-call", userId);
+        });
         socket.on("disconnect", () => {
             sendStatus(socket, UserStatus.Disconnected);
         });

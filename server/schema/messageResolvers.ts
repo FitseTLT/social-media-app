@@ -6,20 +6,27 @@ import { Friendship } from "../models/Friendship";
 import { User } from "../models/User";
 import { FriendshipStatus } from "../models/ENUMS";
 import { socketIO } from "../socket";
+import { Comment } from "../models/Comment";
 
 export const createMessage = async (
     {
         receiverId,
         text,
         media,
+        callType,
+        callDuration,
+        callerId,
     }: {
         receiverId: number;
         text: string;
         media?: any;
+        callType?: string;
+        callDuration?: number;
+        callerId?: number;
     },
     { user }: { user: number }
 ) => {
-    const senderId = user;
+    const senderId = callerId ?? user;
 
     let mediaUrl = null,
         mediaType = null;
@@ -30,13 +37,17 @@ export const createMessage = async (
         mediaUrl = path.path;
         mediaType = mimetype;
     }
+    const callReceiver = receiverId !== callerId ? receiverId : user;
 
     const message = await Message.create({
         senderId,
-        receiverId,
+        receiverId: callerId ? callReceiver : receiverId,
         text,
         media: mediaUrl,
         mediaType,
+        callType,
+        callDuration,
+        isRead: !!callType,
     });
 
     const friendship = await Friendship.findOne({
@@ -47,11 +58,11 @@ export const createMessage = async (
             ],
         },
     });
-    let unread = 1;
+    let unread = callType ? 0 : 1;
     if (friendship) {
         const receiver =
             receiverId === friendship.requestedBy ? "reqUnread" : "accUnread";
-        unread = friendship[receiver] + 1;
+        unread = friendship[receiver] + (callType ? 0 : 1);
         await friendship.update({
             [receiver]: unread,
             lastMessage: message.id,
@@ -59,9 +70,12 @@ export const createMessage = async (
         });
     }
     const sender = await User.findByPk(user);
+
+    const msg = await Message.paginate({ where: { id: message.id } });
+
     socketIO
         .to(receiverId.toString())
-        .emit("direct-message", message, sender, unread);
+        .emit("direct-message", msg.edges?.[0].node, sender, unread);
 
     return message;
 };
@@ -75,25 +89,27 @@ export async function setAsRead(
     if (!message) throw new Error("message doesn't exist");
 
     if (user !== message.receiverId) throw new Error("unauthorized");
+    if (!message.isRead) {
+        await message.update({ isRead: true });
 
-    await message.update({ isRead: true });
+        const { receiverId, senderId } = message;
 
-    const { receiverId, senderId } = message;
+        const friendship = await Friendship.findOne({
+            where: {
+                [Op.or]: [
+                    { requestedBy: senderId, acceptedBy: receiverId },
+                    { requestedBy: receiverId, acceptedBy: senderId },
+                ],
+            },
+        });
 
-    const friendship = await Friendship.findOne({
-        where: {
-            [Op.or]: [
-                { requestedBy: senderId, acceptedBy: receiverId },
-                { requestedBy: receiverId, acceptedBy: senderId },
-            ],
-        },
-    });
-
-    if (friendship) {
-        const receiver =
-            receiverId === friendship.requestedBy ? "reqUnread" : "accUnread";
-
-        await friendship.decrement(receiver);
+        if (friendship) {
+            const receiver =
+                receiverId === friendship.requestedBy
+                    ? "reqUnread"
+                    : "accUnread";
+            if (friendship[receiver] > 0) await friendship.decrement(receiver);
+        }
     }
 
     return message;
@@ -129,10 +145,17 @@ export async function setAllAsRead(
         const receiver =
             receiverId === friendship.requestedBy ? "reqUnread" : "accUnread";
 
-        await friendship.update(receiver, 0);
+        await friendship.update({ [receiver]: 0 });
     }
 
-    return messages;
+    const ids = messages.map((msg) => msg.id);
+    const msgs = await Message.paginate({
+        where: {
+            id: { [Op.in]: ids },
+        },
+    });
+
+    return msgs.edges.map((msg) => msg.node);
 }
 
 export async function listRecentMessages(

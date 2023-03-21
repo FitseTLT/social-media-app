@@ -49,17 +49,13 @@ export const UserPosts = (prop: Props) => {
         ? prop
         : useSelector((state: RootState) => state.user);
 
-    const { data, noMoreData, refAnchor, client } = useScrollFetch({
+    const { data, noMoreData, refAnchor } = useScrollFetch({
         QUERY,
         variables: { userId: id },
     });
 
-    useEffect(() => {
-        return () => client.resetStore();
-    }, []);
-
     return (
-        <Container maxWidth="sm">
+        <Box maxWidth="sm">
             <Box
                 sx={{
                     backgroundColor: "background.paper",
@@ -67,6 +63,7 @@ export const UserPosts = (prop: Props) => {
                     display: "flex",
                     alignItems: "center",
                     p: 2,
+                    m: 1,
                     mb: 4,
                 }}
             >
@@ -79,7 +76,6 @@ export const UserPosts = (prop: Props) => {
                 (Object.values(data)?.[0] as Post[])?.map((post: Post) => (
                     <Post post={post} key={post.id} />
                 ))}
-
             {noMoreData ? (
                 <Typography textAlign="center">
                     No {(Object.values(data)?.[0] as []).length > 0 && "more"}{" "}
@@ -90,6 +86,6 @@ export const UserPosts = (prop: Props) => {
                     Loading ...
                 </Typography>
             )}
-        </Container>
+        </Box>
     );
 };

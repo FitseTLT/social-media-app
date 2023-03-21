@@ -21,7 +21,9 @@ const ACCEPT_FRIEND_REQUEST = gql`
 `;
 
 export const FriendRequests = () => {
-    const { data, refetch } = useQuery(LIST_FRIEND_REQUESTS);
+    const { data, refetch } = useQuery(LIST_FRIEND_REQUESTS, {
+        fetchPolicy: "network-only",
+    });
     const [acceptRequest, { data: requestData, loading, called }] = useMutation(
         ACCEPT_FRIEND_REQUEST
     );

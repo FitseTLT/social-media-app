@@ -31,7 +31,7 @@ Friendship.init(
             unique: "unique",
         },
         reqUnread: {
-            type: DataTypes.NUMBER,
+            type: DataTypes.INTEGER,
             defaultValue: 0,
         },
         acceptedBy: {
@@ -41,11 +41,11 @@ Friendship.init(
             unique: "unique",
         },
         accUnread: {
-            type: DataTypes.NUMBER,
+            type: DataTypes.INTEGER,
             defaultValue: 0,
         },
         lastMessage: {
-            type: DataTypes.NUMBER,
+            type: DataTypes.INTEGER,
             references: {
                 model: Message,
                 key: "id",

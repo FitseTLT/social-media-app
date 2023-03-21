@@ -127,10 +127,8 @@ export async function likePost(
         postId: number;
         isLike: boolean;
     },
-    { user }: { user: string }
+    { user }: { user: number }
 ) {
-    const userId = Number(user);
-
     const post = await Post.findByPk(postId);
 
     if (!post) throw new Error("post doesn't exist");
@@ -138,6 +136,7 @@ export async function likePost(
     const like_dislike = await Like_Dislike.findOne({
         where: {
             postId,
+            userId: user,
         },
     });
 
@@ -145,7 +144,7 @@ export async function likePost(
         await Like_Dislike.create({
             postId,
             isLike,
-            userId,
+            userId: user,
         });
 
         isLike

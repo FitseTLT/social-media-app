@@ -1,24 +1,20 @@
-import { Container, Box, Snackbar, IconButton } from "@mui/material";
+import { Box, Snackbar, IconButton, Modal } from "@mui/material";
 import { css } from "@emotion/css";
 import { Tabs, Tab, Typography } from "@mui/material";
-import { ChatBubble, Close, Home, People, Timeline } from "@mui/icons-material";
+import { ChatBubble, Close, Home, People } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { gql } from "@apollo/client/core";
-import { Link, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setCurrentUser } from "../store/userSlice";
 import { AvatarMenu } from "./AvatarMenu";
-import { io, Socket } from "socket.io-client";
 import { RootState } from "../store/store";
 import { setupSocket } from "../socket/setupSocket";
-import { useScrollFetch } from "../hooks/useScrollFetch";
-import {
-    closeNotification,
-    setRecentMessages,
-    setTotalUnread,
-} from "../store/messageSlice";
-import { borderRadius } from "@mui/system";
+import { closeNotification, setTotalUnread } from "../store/messageSlice";
+import { CallNotification } from "./Message/CallNotification";
+import { CallModal } from "./Message/CallModal";
+import { setupWebRTC } from "../socket/setupWebRTC";
 
 const currentUser = gql`
     query {
@@ -26,18 +22,6 @@ const currentUser = gql`
             id
             name
             picture
-        }
-    }
-`;
-
-const LIST_RECENT_MESSAGES = gql`
-    query ($page: Int, $query: String) {
-        listRecentMessages(query: $query, page: $page) {
-            friendId
-            name
-            picture
-            lastMessage
-            unreadMessages
         }
     }
 `;
@@ -50,17 +34,9 @@ const GET_TOTAL_UNREAD = gql`
     }
 `;
 
-const MainLayout = ({ socket }: { socket: Socket }) => {
-    const { user, message } = useSelector((state: RootState) => state);
-    const [query, setQuery] = useState("");
-    const [page, setPage] = useState(0);
-    const { data: messagesList, error: err } = useScrollFetch({
-        QUERY: LIST_RECENT_MESSAGES,
-        variables: {
-            page,
-            query,
-        },
-    });
+const MainLayout = () => {
+    const { user, message, call } = useSelector((state: RootState) => state);
+
     useQuery(GET_TOTAL_UNREAD, {
         onCompleted(data) {
             const friendIdsWithUnreadMsgs =
@@ -68,17 +44,20 @@ const MainLayout = ({ socket }: { socket: Socket }) => {
             dispatch(setTotalUnread(friendIdsWithUnreadMsgs));
         },
     });
+    const { pathname } = useLocation();
+
+    useEffect(() => {
+        if (pathname.includes("chat")) setTab("/chat");
+        else if (pathname.includes("account")) setTab("/account");
+        else setTab("/");
+    }, []);
 
     useEffect(() => {
         if (!user.id) return;
 
-        setupSocket(socket, user.id, dispatch);
+        setupSocket(user.id, dispatch);
+        setupWebRTC(dispatch);
     }, [user.id]);
-
-    useEffect(() => {
-        if (messagesList)
-            dispatch(setRecentMessages(messagesList?.listRecentMessages));
-    }, [messagesList]);
 
     const { loading, error, data } = useQuery(currentUser, {
         onCompleted(data) {
@@ -128,19 +107,27 @@ const MainLayout = ({ socket }: { socket: Socket }) => {
                     boxShadow: "0px 5px 10px 0px rgba(0, 0, 0, 0.15)",
                 })}
             >
-                <Link to="/">
-                    <Typography component="h3" color="brown" m={2}>
-                        Social Media App
-                    </Typography>
-                </Link>
+                <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                    <Link to="/">
+                        <Typography component="h3" color="brown" m={2}>
+                            Social Media App
+                        </Typography>
+                    </Link>
+                </Box>
                 <Tabs
+                    sx={{ ml: "20px" }}
                     onChange={(e, value) => {
                         setTab(value);
-                        navigate(value);
                     }}
                     value={tab}
                 >
-                    <Tab icon={<Home />} value="/" />
+                    <Tab
+                        icon={<Home />}
+                        value="/"
+                        onClick={() => {
+                            navigate("/");
+                        }}
+                    />
                     <Tab
                         icon={
                             <Box position="relative">
@@ -174,25 +161,41 @@ const MainLayout = ({ socket }: { socket: Socket }) => {
                             </Box>
                         }
                         value="/chat"
+                        onClick={() => {
+                            navigate("/chat");
+                        }}
                     />
 
-                    <Tab icon={<People />} value="/account" />
+                    <Tab
+                        icon={<People />}
+                        value="/account"
+                        onClick={() => {
+                            navigate("/account");
+                        }}
+                    />
                 </Tabs>
                 <AvatarMenu />
             </nav>
-            <Container
-                maxWidth={false}
+            <Box
                 sx={{
                     width: "100%",
                     maxWidth: "100%",
                     bgcolor: "#E4E6EB",
                     mt: "80px",
-                    p: 2,
+                    p: { sm: 2 },
+                    py: { xs: 2 },
                     minHeight: "calc(100vh - 80px)",
+                    boxSizing: "border-box",
+                    display: "flex",
+                    justifyContent: "center",
                 }}
             >
                 <Outlet />
-            </Container>
+            </Box>
+            <CallNotification />
+            <Modal open={!!call.onCall}>
+                <CallModal />
+            </Modal>
         </Box>
     );
 };

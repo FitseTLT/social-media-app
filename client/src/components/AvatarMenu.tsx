@@ -1,20 +1,26 @@
 import { Avatar, IconButton, Menu, MenuItem, MenuList } from "@mui/material";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../store/store";
 import { useState } from "react";
 import axios from "../axios";
 import { Link, useNavigate } from "react-router-dom";
 import { css } from "@emotion/css";
+import { logout } from "./../store/userSlice";
 
 export const AvatarMenu = () => {
     const user = useSelector((state: RootState) => state.user);
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
-    const logout = async () => {
+    const logoutHandler = async () => {
         try {
-            await axios("/logout");
+            await axios.post("/api/logout");
+
+            dispatch(logout);
+
             navigate("/login");
+            location.reload();
         } catch (e) {}
     };
 
@@ -38,7 +44,7 @@ export const AvatarMenu = () => {
                         <MenuItem>Edit Profile</MenuItem>
                     </Link>
                     <MenuItem
-                        onClick={logout}
+                        onClick={logoutHandler}
                         className={css({ color: "black" })}
                     >
                         Logout

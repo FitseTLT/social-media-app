@@ -36,17 +36,18 @@ export const useScrollFetch = ({
         hasPreviousPage: true,
         isNextPage: true,
     });
-    const [fetch, { data, error, fetchMore, client }] = useLazyQuery(QUERY, {
-        onCompleted(data) {
+    const [fetch, { data, error, fetchMore }] = useLazyQuery(QUERY, {
+        async onCompleted(data) {
+            fetchRef.current.loading = false;
             const list = Object.values(data)[0] as any;
-
+            if (list?.length < 10) {
+                fetchRef.current.hasNextPage = false;
+                fetchRef.current.hasPreviousPage = false;
+            }
             if (list.length === 0) {
                 fetchRef.current.noMoreData = true;
                 return;
             }
-        },
-        onError(error) {
-            console.log({ error });
         },
         fetchPolicy: "network-only",
         variables: {
@@ -94,6 +95,7 @@ export const useScrollFetch = ({
             ) {
                 fetchRef.current.loading = true;
                 fetchRef.current.isNextPage = !scrollUp;
+
                 fetchMore({}).then((value) => {
                     fetchRef.current.loading = false;
                     const list = Object.values(value.data)[0] as any;
@@ -148,6 +150,7 @@ export const useScrollFetch = ({
             window.addEventListener("scroll", loadMore);
 
             fetch();
+            fetchRef.current.loading = true;
             fetchRef.current.scrollY = window.scrollY;
             return () => window.removeEventListener("scroll", loadMore);
         }
@@ -176,6 +179,5 @@ export const useScrollFetch = ({
         hasPreviousPage: fetchRef.current.hasPreviousPage,
         fetch,
         error,
-        client,
     };
 };

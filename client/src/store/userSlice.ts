@@ -14,7 +14,6 @@ interface User {
 export interface Status {
     userId: number;
     status: OnlineStatus;
-    lastConnected: string;
 }
 
 const initialState: User = { friendsStatus: [] };
@@ -25,6 +24,9 @@ const userSlice = createSlice({
     reducers: {
         setCurrentUser: (state, { payload }) => {
             return { ...state, ...payload };
+        },
+        logout() {
+            return undefined;
         },
         setFriendsStatus: (state, { payload }) => {
             state.friendsStatus = payload;
@@ -40,5 +42,5 @@ const userSlice = createSlice({
 
 export default userSlice.reducer;
 
-export const { setCurrentUser, setFriendsStatus, setUserStatus } =
+export const { setCurrentUser, setFriendsStatus, setUserStatus, logout } =
     userSlice.actions;

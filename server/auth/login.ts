@@ -43,6 +43,7 @@ passport.use(
 
             if (!passwordCorrect)
                 return done(null, false, { message: "invalid credentials" });
+
             done(
                 null,
                 { id: user.id.toString(), email: user.email },
@@ -54,7 +55,7 @@ passport.use(
 
 export const login = Router();
 
-login.post("/login", (req, res, next) => {
+login.post("/api/login", (req, res, next) => {
     passport.authenticate("login", (err: any, user: any, info: any) => {
         if (err || !user)
             return res.status(401).send(info.message || "Error Occurred");

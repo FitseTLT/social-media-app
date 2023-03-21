@@ -60,6 +60,12 @@ Message.init(
             type: DataTypes.BOOLEAN,
             defaultValue: false,
         },
+        callType: {
+            type: DataTypes.ENUM("audio-call", "video-call"),
+        },
+        callDuration: {
+            type: DataTypes.INTEGER,
+        },
     },
     {
         sequelize,

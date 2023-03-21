@@ -71,7 +71,7 @@ export const EditProfile = () => {
         reader.readAsDataURL(file);
 
         reader.onloadend = () => {
-            setPictureUrl(reader.result);
+            setPictureUrl(reader.result as string);
         };
     };
 

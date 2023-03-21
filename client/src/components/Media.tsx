@@ -5,25 +5,35 @@ interface Props {
     mediaType: string | undefined;
     mediaPath: string | null | undefined;
     width?: string;
+    playable?: boolean;
 }
 
-export const Media = ({ mediaType, mediaPath, width }: Props) => {
+export const Media = ({
+    mediaType,
+    mediaPath,
+    width,
+    playable = false,
+}: Props) => {
     if (!mediaPath) return null;
 
     return (
         <Box
             sx={{
-                width: width || "90%",
+                width: width || "100%",
                 maxHeight: "300px",
                 overflow: "hidden",
-                "> img,video": { width: "100%" },
+                "> a > img,video": { width: "100%" },
             }}
         >
             {mediaPath && mediaType?.includes("video") && (
-                <video src={mediaPath}></video>
+                <a href={mediaPath}>
+                    <video src={mediaPath} controls={playable}></video>
+                </a>
             )}
             {mediaPath && mediaType?.includes("image") && (
-                <img src={mediaPath} />
+                <a href={mediaPath}>
+                    <img src={mediaPath} />
+                </a>
             )}
         </Box>
     );

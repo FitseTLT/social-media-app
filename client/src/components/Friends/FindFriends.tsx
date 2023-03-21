@@ -22,7 +22,9 @@ const SEND_REQUEST = gql`
 `;
 
 export const FindFriends = () => {
-    const { refetch, data: data } = useQuery(SEARCH_FOR_PEOPLE);
+    const { refetch, data: data } = useQuery(SEARCH_FOR_PEOPLE, {
+        fetchPolicy: "network-only",
+    });
     const [query, setQuery] = useState("");
 
     const [

@@ -23,6 +23,7 @@ import { Comment } from "../Comment/Comment";
 import { CommentType, CreateComment } from "../Comment/CreateComment";
 import { LikeDislike } from "../LikeDislike";
 import { LoadMore } from "../LoadMore";
+import { Media } from "../Media";
 import { UserAvatar } from "../UserAvatar";
 
 export interface UserData {
@@ -267,12 +268,20 @@ const PostDisplay = ({
                 >
                     {post?.content && <LoadMore text={post?.content} />}
 
-                    {post?.media &&
-                        (post?.mediaType?.includes("image") ? (
-                            <img src={post?.media} />
-                        ) : (
-                            <video src={post?.media}></video>
-                        ))}
+                    {post?.media && (
+                        <Box
+                            my={2}
+                            mx={0}
+                            display="flex"
+                            justifyContent="center"
+                        >
+                            <Media
+                                playable
+                                mediaPath={post.media}
+                                mediaType={post.mediaType}
+                            />
+                        </Box>
+                    )}
                     <Divider sx={{ mt: 2 }} />
                     <Box
                         display="flex"
@@ -328,12 +337,6 @@ const PostDisplay = ({
                                 comment={comment}
                             />
                         ))}
-                    {noMoreData === true && (
-                        <Typography textAlign="center" fontSize={12}>
-                            No {comments && comments?.length > 0 && "more"}
-                            comments
-                        </Typography>
-                    )}
                     {noMoreData === false && (
                         <Typography
                             textAlign="center"

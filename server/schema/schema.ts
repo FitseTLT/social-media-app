@@ -103,6 +103,8 @@ type Message {
     createdAt: String
     isRead: Boolean
     cursor: String
+    callType: String
+    callDuration: Int
 }
 
 type Comment{
@@ -151,7 +153,7 @@ type Mutation{
     acceptFriendRequest(friendshipId: Int!, accepted: Boolean):Friendship
     likePost(postId: Int!, isLike: Boolean):Post
     createComment(postId: Int!, content: String, media: Upload): Comment
-    createMessage(receiverId: Int!,text: String, media: Upload): Message
+    createMessage(receiverId: Int!,text: String, media: Upload, callType: String, callDuration: Int, callerId: Int): Message
     setAsRead(messageId: Int!): Message
     setAllAsRead(friendId: Int!): [Message]
 }

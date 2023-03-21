@@ -1,3 +1,3 @@
 import { Auth } from "./Auth";
 
-export const Login = () => <Auth label="Log in" url="/login" isLogin />;
+export const Login = () => <Auth label="Log in" url="/api/login/" isLogin />;

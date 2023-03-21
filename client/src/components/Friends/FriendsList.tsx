@@ -13,8 +13,9 @@ const SEARCH_FOR_PEOPLE = gql`
 `;
 
 export const FriendsList = () => {
-    const { refetch, data } = useQuery(SEARCH_FOR_PEOPLE);
-    const navigate = useNavigate();
+    const { refetch, data } = useQuery(SEARCH_FOR_PEOPLE, {
+        fetchPolicy: "network-only",
+    });
 
     const searchHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
         const query = e.target.value;

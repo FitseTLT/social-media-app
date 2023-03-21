@@ -1,14 +1,39 @@
+import { gql } from "@apollo/client";
 import { css } from "@emotion/css";
 import { Box, Container, Divider, Typography } from "@mui/material";
-import { useSelector } from "react-redux";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { useScrollFetch } from "../../hooks/useScrollFetch";
+import { setRecentMessages } from "../../store/messageSlice";
 import { RootState } from "../../store/store";
 import { UserAvatar } from "../UserAvatar";
 
+const LIST_RECENT_MESSAGES = gql`
+    query ($page: Int, $query: String) {
+        listRecentMessages(query: $query, page: $page) {
+            friendId
+            name
+            picture
+            lastMessage
+            unreadMessages
+        }
+    }
+`;
+
 export const RecentMessageList = () => {
+    const { data: messagesList } = useScrollFetch({
+        QUERY: LIST_RECENT_MESSAGES,
+    });
     const recentMessages = useSelector(
         (state: RootState) => state.message.recentMessages
     );
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        if (messagesList)
+            dispatch(setRecentMessages(messagesList?.listRecentMessages));
+    }, [messagesList]);
 
     return (
         <Container maxWidth="sm" sx={{ mt: 4, minHeight: "100%" }}>

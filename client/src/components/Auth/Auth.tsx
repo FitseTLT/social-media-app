@@ -32,6 +32,7 @@ export const Auth = ({
         const { email, password } = data;
         try {
             const res = await axios.post(url, { email, password });
+
             navigate("/");
         } catch (e: any) {
             setBackendError(e?.response?.data || "Error Occurred");

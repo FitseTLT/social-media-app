@@ -1,13 +1,11 @@
-import { Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import { messageReceived } from "../store/messageSlice";
 import { AppDispatch } from "../store/store";
 import { setFriendsStatus, setUserStatus } from "../store/userSlice";
 
-export const setupSocket = (
-    socket: Socket,
-    id: number,
-    dispatch: AppDispatch
-) => {
+export const socket = io("https://192.168.0.100:4000", { autoConnect: false });
+
+export const setupSocket = (id: number, dispatch: AppDispatch) => {
     socket.auth = { userId: id };
 
     socket.connect();
@@ -21,11 +19,13 @@ export const setupSocket = (
     });
 
     socket.on("direct-message", (message, user, unread) => {
-        const notification = document.getElementById(
-            "notification-message"
-        ) as HTMLAudioElement;
+        if (!message.callType) {
+            const notification = document.getElementById(
+                "notification-message"
+            ) as HTMLAudioElement;
 
-        notification.play();
+            notification.play();
+        }
 
         dispatch(messageReceived({ message, user, unread }));
     });
