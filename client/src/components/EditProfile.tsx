@@ -88,6 +88,7 @@ export const EditProfile = () => {
                 flexDirection: "column",
                 marginTop: "50px",
                 marginInline: "auto",
+                paddingInline: "20px",
                 width: "100%",
                 maxWidth: "400px",
                 alignItems: "center",
