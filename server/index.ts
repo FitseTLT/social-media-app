@@ -11,40 +11,35 @@ import passport from "passport";
 import { logout } from "./auth/logout";
 import sequelizeConnect from "connect-session-sequelize";
 import { sequelize } from "./setup";
-import https from "https";
+import http from "http";
 import { socketSetup } from "./socket";
 import fs from "fs";
 
 let graphqlUploadExpress: any;
 
 dotenv.config();
+
 require("./setup");
 const app = express();
-export const httpsServer = https.createServer(
-    {
-        key: fs.readFileSync("key.pem"),
-        cert: fs.readFileSync("cert.pem"),
-    },
-    app
-);
+export const httpServer = http.createServer(app);
 
 app.use(
-    cors({
-        credentials: true,
-        origin: ["/graphql", process.env.CLIENT_URL!],
-    })
+  cors({
+    credentials: true,
+    origin: ["/graphql", process.env.CLIENT_URL!],
+  })
 );
 
 const SequelizeStore = sequelizeConnect(session.Store);
 
 app.use(
-    session({
-        secret: process.env.COOKIE_SESSION!,
-        store: new SequelizeStore({
-            db: sequelize,
-        }),
-        cookie: { maxAge: 86400000 },
-    })
+  session({
+    secret: process.env.COOKIE_SESSION!,
+    store: new SequelizeStore({
+      db: sequelize,
+    }),
+    cookie: { maxAge: 86400000 },
+  })
 );
 app.use(passport.initialize());
 app.use(passport.session());
@@ -57,8 +52,8 @@ app.use("/", express.static("./public/dist"));
 app.use("/public", express.static("./public"));
 
 app.get("*", (req, res) => {
-    res.writeHead(200, { "Content-Type": "text/html" });
-    res.end(fs.readFileSync("./public/dist/index.html"));
+  res.writeHead(200, { "Content-Type": "text/html" });
+  res.end(fs.readFileSync("./public/dist/index.html"));
 });
 
 app.use(signUp);
@@ -66,29 +61,29 @@ app.use(login);
 app.use(logout);
 
 (async () => {
-    const module = await import("graphql-upload/graphqlUploadExpress.mjs");
-    graphqlUploadExpress = module.default;
-    app.use(
-        "/graphql",
-        (req, res, next) => {
-            if (!req.user) return res.status(401).send("Not logged in");
-            next();
-        },
-        graphqlUploadExpress({
-            maxFileSize: 100000000,
-            maxFiles: 10,
-        }),
-        graphqlHTTP((req: any) => ({
-            graphiql: process.env.NODE_ENV === "development",
-            schema,
-            rootValue: root,
-            context: {
-                user: Number(req.user?.id),
-            },
-        }))
-    );
+  const module = await import("graphql-upload/graphqlUploadExpress.mjs");
+  graphqlUploadExpress = module.default;
+  app.use(
+    "/graphql",
+    (req, res, next) => {
+      if (!req.user) return res.status(401).send("Not logged in");
+      next();
+    },
+    graphqlUploadExpress({
+      maxFileSize: 100000000,
+      maxFiles: 10,
+    }),
+    graphqlHTTP((req: any) => ({
+      graphiql: process.env.NODE_ENV === "development",
+      schema,
+      rootValue: root,
+      context: {
+        user: Number(req.user?.id),
+      },
+    }))
+  );
 })();
 
-httpsServer.listen(process.env.PORT, () => {
-    console.log(`Listening on Port ${process.env.PORT}`);
+httpServer.listen(process.env.PORT, () => {
+  console.log(`Listening on Port ${process.env.PORT}`);
 });

@@ -28,29 +28,29 @@ import ssl from "@vitejs/plugin-basic-ssl";
 // });
 
 export default defineConfig({
-    plugins: [react()],
-    server: {
-        // https: true,
-        // https: https.createServer({
-        //     key: fs.readFileSync("./key.pem"),
-        //     cert: fs.readFileSync("./cert.pem"),
-        // }),
-        proxy: {
-            "/api/login": {
-                target: "http://192.168.0.100:4000",
-            },
-            "/api/signup": {
-                target: "http://192.168.0.100:4000",
-                changeOrigin: true,
-            },
-            "/graphql": {
-                target: "http://192.168.0.100:4000",
-                changeOrigin: true,
-            },
-            "/api/logout": {
-                target: "http://192.168.0.100:4000",
-                changeOrigin: true,
-            },
-        },
+  plugins: [react()],
+  server: {
+    // https: true,
+    // https: https.createServer({
+    //     key: fs.readFileSync("./key.pem"),
+    //     cert: fs.readFileSync("./cert.pem"),
+    // }),
+    proxy: {
+      "/api/login": {
+        target: "http://localhost:4000",
+      },
+      "/api/signup": {
+        target: "http://localhost:4000",
+        changeOrigin: true,
+      },
+      "/graphql": {
+        target: "http://localhost:4000",
+        changeOrigin: true,
+      },
+      "/api/logout": {
+        target: "http://localhost:4000",
+        changeOrigin: true,
+      },
     },
+  },
 });
